@@ -17,7 +17,7 @@
         "commands": [
             {
                 "command": "align-columns.align",
-                "title": "Align multi colums separated by separator"
+                "title": "Align multi columns by separator"
             }
         ]
     },
