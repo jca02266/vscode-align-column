@@ -68,96 +68,6 @@ async function replaceSelection(newText: string) {
     }
 }
 
-// return lastTabStop
-function decideTabStop() {
-    const tabStop: number[] = [];
-    let lastTabStop: number[] = [];
-    for (const text of eachTextInSelection()) {
-        const chars = [...text, "\n"];
-
-        let tabIndex = 0;
-        let lastChar = " ";
-        for (const [i, c] of chars.entries()) {
-            if (lastChar !== " " && c === " ") {
-                lastChar = " ";
-                continue;
-            }
-            if (lastChar === " " && c !== " ") {
-                lastChar = "";
-                tabStop[tabIndex] = i;
-                tabIndex++;
-            }
-        }
-        console.debug("tabStop", ...tabStop);
-        if (lastTabStop.length === 0) {
-            lastTabStop = [...tabStop];
-        } else {
-            for (const [a, b, i] of zip(tabStop, lastTabStop)) {
-                if (b === undefined) {
-                    lastTabStop[i] = a;
-                }
-                if (a > b) {
-                    lastTabStop[i] = a;
-                }
-            }
-        }
-        console.debug("last   ", ...lastTabStop);
-    }
-
-    return lastTabStop;
-}
-
-function addTabStop(newChars: string[], tabStop: number[], tabIndex: number, i: number): [number, number] {
-    const tab = tabStop[tabIndex];
-    if (tab <= i) {
-        return [i, tabIndex + 1];
-    } else {
-        for (const _ of range(tab - i)) {
-            newChars.push(" ");
-        }
-
-        return [tab, tabIndex + 1];
-    }
-}
-
-function alignColumn(tabStop: number[]) {
-    console.debug("012345678901234567890");
-    const lines = [];
-    for (const text of eachTextInSelection()) {
-        const chars = [...text];
-        const newChars: string[] = [];
-
-        let tabIndex = 0;
-        let lastChar = " ";
-        let offset = 0;
-
-        // align beginning of line (add leading spaces)
-        [offset, tabIndex] = addTabStop(newChars, tabStop, tabIndex, offset);
-
-        for (const c of chars) {
-            if (lastChar !== " " && c === " " || c === undefined) {
-                lastChar = " ";
-                [offset, tabIndex] = addTabStop(newChars, tabStop, tabIndex, offset);
-                continue;
-            }
-            if (c !== " ") {
-                lastChar = c;
-                offset++;
-                newChars.push(c);
-            }
-        }
-
-        // align end of line (add trailing spaces)
-        for (const i of range(tabStop.length - tabIndex)) {
-            [offset, tabIndex] = addTabStop(newChars, tabStop, tabIndex, offset);
-        }
-        console.debug(newChars.join("") + "|");
-        lines.push(newChars);
-    }
-
-    return lines;
-}
-
 declare global {
     interface Array<T> {
         minIndex(fn: (v: T) => number): number | undefined
@@ -210,14 +120,14 @@ Array.prototype.min = function (fn: (v: any) => number): any | undefined {
     if (i !== undefined) {
         return this[i];
     }
-}
+};
 
 Array.prototype.max = function (fn: (v: any) => number): any | undefined {
     const i = this.maxIndex(fn);
     if (i !== undefined) {
         return this[i];
     }
-}
+};
 
 declare global {
     interface String {
@@ -229,7 +139,7 @@ declare global {
 
 String.prototype.splice = function (start, delCount, newSubStr) {
     return this.slice(0, start) + newSubStr + this.slice(start + Math.abs(delCount));
-}
+};
 
 String.prototype.indexNonSpace = function (index: number = 0): number {
     for (let i = index; i < this.length; i++) {
@@ -238,7 +148,7 @@ String.prototype.indexNonSpace = function (index: number = 0): number {
         }
     }
     return -1;
-}
+};
 
 // 文字列sの各文字のうち、最も左で見つかったインデックスを返す
 String.prototype.indexChar = function (s: string, index: number = 0): number {
@@ -277,51 +187,51 @@ function bytewidth(s: string, len: number): number {
 }
 
 class LineObject {
-    str: string
-    lastindex: number
+    str: string;
+    lastindex: number;
     constructor(line: string, lastindex: number = 0) {
         this.str = line;
         this.lastindex = lastindex;
     }
 }
 
-function alignBySeparator(cstr: string) {
+interface XS {
+    idx: number
+    column: number
+    char: string
+}
 
-    const lines: LineObject[] = []
-    for (const line of eachTextInSelection()) {
-        lines.push(new LineObject(line))
+// 1. 区切り文字に関する情報(インデックス, サイズ(column), 文字(char))を抽出
+function getColumnInfo1(lines: LineObject[], cstr: string): XS[] | undefined {
+    const xs: XS[] = [];
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].lastindex < 0) {
+            continue;
+        }
+        lines[i].lastindex = lines[i].str.indexChar(cstr, lines[i].lastindex);
+
+        if (lines[i].lastindex < 0) {
+            continue;
+        }
+
+        xs.push({
+            idx: i,
+            column: bytewidth(lines[i].str, lines[i].lastindex),
+            char: lines[i].str.charAt(lines[i].lastindex)
+        });
     }
 
-    while (true) {
-        // 1. 区切り文字に関する情報(インデックス, サイズ(column), 文字(char))を抽出
-        interface XS {
-            idx: number
-            column: number
-            char: string
-        }
-        const xs: XS[] = []
-        for (let i = 0; i < lines.length; i++) {
-            if (lines[i].lastindex < 0) {
-                continue;
-            }
-            lines[i].lastindex = lines[i].str.indexChar(cstr, lines[i].lastindex);
+    if (xs.length <= 1) {
+        // 区切り文字を含む行がない。または、1行で桁揃えの必要がない
+        return undefined;
+    }
 
-            if (lines[i].lastindex < 0) {
-                continue;
-            }
+    return xs;
+}
 
-            xs.push({
-                idx: i,
-                column: bytewidth(lines[i].str, lines[i].lastindex),
-                char: lines[i].str.charAt(lines[i].lastindex)
-            });
-        }
-
-        if (xs.length <= 1) {
-            // 区切り文字を含む行がない。または、1行で桁揃えの必要がない
-            break;
-        }
-
+function alignBySeparator(lines: LineObject[], cstr: string): string {
+    let xs;
+    while ((xs = getColumnInfo1(lines, cstr)) !== undefined) {
         // 2. 最左にある区切り文字を取得
         var mlchar = xs.min(function (v: XS): number { return v.column; }).char; // 最左文字(most-left-char)
 
@@ -344,15 +254,15 @@ function alignBySeparator(cstr: string) {
             if (v.char === mlchar && v.column <= mrcolumn) {
                 const line = lines[v.idx];
 
-                var index = line.lastindex;
-                var spaceCount = mrcolumn - v.column;
+                let index = line.lastindex;
+                const spaceCount = mrcolumn - v.column;
 
                 // 区切り文字の桁を揃える
                 let s = line.str.splice(index, 0, " ".repeat(spaceCount));
 
                 // (区切り文字の次の文字)が空白だったら詰める
                 index += spaceCount + 1;
-                var delCount = 0;
+                let delCount = 0;
                 while (s.charAt(index + delCount) === ' ') {
                     delCount++;
                 }
@@ -366,47 +276,36 @@ function alignBySeparator(cstr: string) {
     return lines.map(function (v) { return v.str + "\n"; }).join("");
 }
 
-function alignBySpace() {
-    const cstr = " "
+// 1. 区切り文字に関する情報(インデックス, サイズ(column), 文字(char))を抽出
+function getColumnInfo2(lines: LineObject[]): XS[] | undefined {
+    const xs: XS[] = [];
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].lastindex < 0) {
+            continue;
+        }
+        lines[i].lastindex = lines[i].str.indexNonSpace(lines[i].lastindex);
 
-    const lines: LineObject[] = []
-    for (const line of eachTextInSelection()) {
-        lines.push(new LineObject(line))
+        if (lines[i].lastindex < 0) {
+            continue;
+        }
+
+        xs.push({
+            idx: i,
+            column: bytewidth(lines[i].str, lines[i].lastindex),
+            char: lines[i].str.charAt(lines[i].lastindex)
+        });
     }
 
-    while (true) {
-        // 1. 区切り文字に関する情報(インデックス, サイズ(column), 文字(char))を抽出
-        interface XS {
-            idx: number
-            column: number
-            char: string
-        }
-        const xs: XS[] = []
-        for (let i = 0; i < lines.length; i++) {
-            if (lines[i].lastindex < 0) {
-                continue;
-            }
-            lines[i].lastindex = lines[i].str.indexNonSpace(lines[i].lastindex);
+    if (xs.length <= 1) {
+        // 区切り文字を含む行がない。または、1行で桁揃えの必要がない
+        return undefined;
+    }
+    return xs;
+}
 
-            if (lines[i].lastindex < 0) {
-                continue;
-            }
-
-            xs.push({
-                idx: i,
-                column: bytewidth(lines[i].str, lines[i].lastindex),
-                char: lines[i].str.charAt(lines[i].lastindex)
-            });
-        }
-
-        if (xs.length <= 1) {
-            // 区切り文字を含む行がない。または、1行で桁揃えの必要がない
-            break;
-        }
-
-        // 2. 最左にある区切り文字を取得
-        var mlchar = xs.min(function (v: XS): number { return v.column; }).char; // 最左文字(most-left-char)
-
+function alignBySpace(lines: LineObject[]): string {
+    let xs;
+    while ((xs = getColumnInfo2(lines)) !== undefined) {
         // 3. 2で取得した区切り文字と同じ文字で最右にあるものを取得
         var mrcolumn = xs.max(function (v: XS): number {
             if (' ' !== v.char) {
@@ -415,19 +314,12 @@ function alignBySpace() {
             return -1;
         }).column;  // 最右カラム(most-right-column)
 
-        // 4. 区切り文字の位置を3の最右にそろえる
-        var lenback = 0;
-        if (mlchar.indexChar(",)]}") !== -1) {
-          // , ) ] } の後を揃える
-          lenback = 1;
-        }
-
         xs.forEach(function (v) {
             if (v.char !== ' ' && v.column <= mrcolumn) {
                 const line = lines[v.idx];
 
-                var index = line.lastindex;
-                var spaceCount = mrcolumn - v.column;
+                const index = line.lastindex;
+                const spaceCount = mrcolumn - v.column;
 
                 // 区切り文字の桁を揃える
                 let s = line.str.splice(index, 0, " ".repeat(spaceCount));
@@ -446,6 +338,7 @@ function alignBySpace() {
 export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('align-columns.align', async () => {
+            // for debugging
             // await setUp();
 
             vscode.window.showInputBox({
@@ -459,12 +352,17 @@ export function activate(context: vscode.ExtensionContext) {
                     // canceled
                     return;
                 }
-                if (value.includes(' ')) {
-                    replaceSelection(alignBySpace());
-                } else {
-                    replaceSelection(alignBySeparator(value));
+
+                const lines: LineObject[] = []
+                for (const line of eachTextInSelection()) {
+                    lines.push(new LineObject(line));
                 }
-                // vscode.window.showInformationMessage(`Alined with <${value}>`);
+
+                const newText = value.includes(' ') ?
+                    alignBySpace(lines) :
+                    alignBySeparator(lines, value);
+                replaceSelection(newText);
+                // vscode.window.showInformationMessage(`Alined by "${value}"`);
             });
         }));
 }
