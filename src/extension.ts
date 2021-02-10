@@ -360,6 +360,10 @@ async function alignMultiCursor(i: number, editor: vscode.TextEditor, selGroup: 
         }, {undoStopAfter: false, undoStopBefore: false});
     }
 }
+
+function charCodeAt(document: vscode.TextDocument, position: vscode.Position): number {
+    return document.lineAt(position.line).text.charCodeAt(position.character);
+}
 function getSelectionGroup(editor: vscode.TextEditor): [number, vscode.Selection[]][] {
     return editor.selections.sort((a, b) => {
         const diff = a.active.line - b.active.line;
@@ -430,6 +434,28 @@ export function activate(context: vscode.ExtensionContext) {
                 await alignMultiCursor(i, editor, selGroup, maxWidth);
             }
         }));
-}
+    context.subscriptions.push(
+        vscode.commands.registerCommand('align-columns.remove-spaces-after-cursor', async () => {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                return;
+            }
+
+            const removeSpacesAfterCursor = async (selection: vscode.Selection) => {
+                const pos = selection.active;
+                let pos2 = pos.translate();
+                while (charCodeAt(editor.document, pos2) <= 32) {
+                    pos2 = pos2.translate(0, 1);
+                }
+                await editor.edit(edit => {
+                    edit.delete(new vscode.Selection(pos, pos2));
+                });
+            };
+　
+            for (const selection of editor.selections) {
+                await removeSpacesAfterCursor(selection);
+            }
+        }));
+    }
 
 export function deactivate() { }

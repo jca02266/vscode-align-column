@@ -11,7 +11,8 @@
     ],
     "activationEvents": [
         "onCommand:align-columns.align",
-        "onCommand:align-columns.align-multi-cursor"
+        "onCommand:align-columns.align-multi-cursor",
+        "onCommand:align-columns.remove-spaces-after-cursor"
     ],
     "main": "./out/extension.js",
     "contributes": {
@@ -23,6 +24,10 @@
             {
                 "command": "align-columns.align-multi-cursor",
                 "title": "Align multi-cursor"
+            },
+            {
+                "command": "align-columns.remove-spaces-after-cursor",
+                "title": "remove spaces after cursor"
             }
         ]
     },
