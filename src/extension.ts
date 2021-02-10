@@ -66,8 +66,27 @@ declare global {
         maxIndex(fn: (v: T) => number): number | undefined
         min(fn: (v: T) => number): T
         max(fn: (v: T) => number): T
+        groupBy<K, T>(
+            getKey: (cur: T, idx: number, src: readonly T[]) => K): [K, T[]][]
     }
 }
+
+Array.prototype.groupBy = function<K, T>(
+    getKey: (cur: T, idx: number, src: readonly T[]) => K
+): [K, T[]][] {
+    return Array.from(
+        this.reduce((map, cur, idx, src) => {
+            const key = getKey(cur, idx, src);
+            const list = map.get(key);
+            if (list) {
+                list.push(cur);
+            } else {
+                map.set(key, [cur]);
+            }
+            return map;
+        }, new Map<K, T[]>())
+    );
+};
 
 Array.prototype.minIndex = function (fn: <T>(v: T) => number): number | undefined {
     if (this.length < 1) {
@@ -327,6 +346,30 @@ function alignBySpace(lines: LineObject[]): string {
     return lines.map(function (v) { return v.str + "\n"; }).join("");
 }
 
+function offsetWidth(editor: vscode.TextEditor, pos: vscode.Position): number {
+    return bytewidth(editor.document.lineAt(pos.line).text, pos.character);
+}
+async function alignMultiCursor(i: number, editor: vscode.TextEditor, selGroup: [number, vscode.Selection[]][], maxWidth: number)  {
+    for (const [, sels] of selGroup) {
+        await editor.edit(edit => {
+            const sel = sels[i];
+            if (sel) {
+                const col = maxWidth - offsetWidth(editor, sel.active);
+                edit.insert(new vscode.Position(sel.active.line, sel.active.character), " ".repeat(col));
+            }
+        }, {undoStopAfter: false, undoStopBefore: false});
+    }
+}
+function getSelectionGroup(editor: vscode.TextEditor): [number, vscode.Selection[]][] {
+    return editor.selections.sort((a, b) => {
+        const diff = a.active.line - b.active.line;
+        if (diff !== 0) {
+            return diff;
+        }
+        return a.active.character - b.active.character;
+    }).groupBy<number, vscode.Selection>((v) => v.active.line);
+}
+
 export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('align-columns.align', async () => {
@@ -363,6 +406,29 @@ export function activate(context: vscode.ExtensionContext) {
                     alignBySeparator(lines, value);
                 replaceSelection(editor, newText);
             });
+        }));
+    context.subscriptions.push(
+        vscode.commands.registerCommand('align-columns.align-multi-cursor', async () => {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                return;
+            }
+
+            const selGroup = getSelectionGroup(editor);
+
+            let maxNum = -1;
+            for (const [, sels] of selGroup) {
+                maxNum = Math.max(maxNum, sels.length);
+            }
+
+            for (let i = 0; i < maxNum; i++) {
+                const selGroup = getSelectionGroup(editor);
+                let maxWidth = -1;
+                for (const [, sels] of selGroup) {
+                    maxWidth = Math.max(maxWidth, offsetWidth(editor, sels[i].active));
+                }
+                await alignMultiCursor(i, editor, selGroup, maxWidth);
+            }
         }));
 }
 
