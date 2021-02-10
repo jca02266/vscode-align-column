@@ -19,15 +19,15 @@
         "commands": [
             {
                 "command": "align-columns.align",
-                "title": "Align multi columns by separator"
+                "title": "Align-columns: Align multi columns by separator"
             },
             {
                 "command": "align-columns.align-multi-cursor",
-                "title": "Align multi-cursor"
+                "title": "Align-columns: Align multi-cursor"
             },
             {
                 "command": "align-columns.remove-spaces-after-cursor",
-                "title": "remove spaces after cursor"
+                "title": "Align-columns: Remove spaces after cursor"
             }
         ]
     },

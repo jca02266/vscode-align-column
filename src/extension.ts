@@ -189,7 +189,7 @@ function bytesize(s: string, index: number): 1|2 {
     return 2;
 }
 
-function bytewidth(s: string, len: number): number {
+function eastAsianWidth(s: string, len: number): number {
     let ret = 0;
     for (let i = 0; i < len; i++) {
         ret += bytesize(s, i);
@@ -227,7 +227,7 @@ function getColumnInfo1(lines: LineObject[], cstr: string): XS[] | undefined {
 
         xs.push({
             idx: i,
-            column: bytewidth(lines[i].str, lines[i].lastindex),
+            column: eastAsianWidth(lines[i].str, lines[i].lastindex),
             char: lines[i].str.charAt(lines[i].lastindex)
         });
     }
@@ -302,7 +302,7 @@ function getColumnInfo2(lines: LineObject[]): XS[] | undefined {
 
         xs.push({
             idx: i,
-            column: bytewidth(lines[i].str, lines[i].lastindex),
+            column: eastAsianWidth(lines[i].str, lines[i].lastindex),
             char: lines[i].str.charAt(lines[i].lastindex)
         });
     }
@@ -346,15 +346,16 @@ function alignBySpace(lines: LineObject[]): string {
     return lines.map(function (v) { return v.str + "\n"; }).join("");
 }
 
-function offsetWidth(editor: vscode.TextEditor, pos: vscode.Position): number {
-    return bytewidth(editor.document.lineAt(pos.line).text, pos.character);
+function eastAsianWidthAtPosition(editor: vscode.TextEditor, pos: vscode.Position): number {
+    return eastAsianWidth(editor.document.lineAt(pos.line).text, pos.character);
 }
+
 async function alignMultiCursor(i: number, editor: vscode.TextEditor, selGroup: [number, vscode.Selection[]][], maxWidth: number)  {
     for (const [, sels] of selGroup) {
         await editor.edit(edit => {
             const sel = sels[i];
             if (sel) {
-                const col = maxWidth - offsetWidth(editor, sel.active);
+                const col = maxWidth - eastAsianWidthAtPosition(editor, sel.active);
                 edit.insert(new vscode.Position(sel.active.line, sel.active.character), " ".repeat(col));
             }
         }, {undoStopAfter: false, undoStopBefore: false});
@@ -429,7 +430,7 @@ export function activate(context: vscode.ExtensionContext) {
                 const selGroup = getSelectionGroup(editor);
                 let maxWidth = -1;
                 for (const [, sels] of selGroup) {
-                    maxWidth = Math.max(maxWidth, offsetWidth(editor, sels[i].active));
+                    maxWidth = Math.max(maxWidth, eastAsianWidthAtPosition(editor, sels[i].active));
                 }
                 await alignMultiCursor(i, editor, selGroup, maxWidth);
             }
