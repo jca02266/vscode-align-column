@@ -45,12 +45,7 @@ function* zip<T>(a: T[], b: T[]) {
     }
 }
 
-function* eachTextInSelection() {
-    const editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
-    if (!editor || editor.selection.isEmpty) {
-        return;
-    }
-
+function* eachTextInSelection(editor: vscode.TextEditor) {
     const startLine = editor.selection.start.line;
     const endLine = editor.selection.end.line;
     for (let line = startLine; line < endLine; line++) {
@@ -59,13 +54,10 @@ function* eachTextInSelection() {
     }
 }
 
-async function replaceSelection(newText: string) {
-    const editor = vscode.window.activeTextEditor;
-    if (editor) {
-        await editor.edit(edit => {
-            edit.replace(editor.selection, newText);
-        });
-    }
+async function replaceSelection(editor: vscode.TextEditor, newText: string) {
+    await editor.edit(edit => {
+        edit.replace(editor.selection, newText);
+    });
 }
 
 declare global {
@@ -340,6 +332,14 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('align-columns.align', async () => {
             // for debugging
             // await setUp();
+            const editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
+            if (!editor) {
+                return;
+            }
+            if (editor.selection.isEmpty) {
+                vscode.window.showInformationMessage(`You should select multi lines`);
+                return;
+            }
 
             vscode.window.showInputBox({
                 prompt: 'Input separator: ',
@@ -353,16 +353,15 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 }
 
-                const lines: LineObject[] = []
-                for (const line of eachTextInSelection()) {
+                const lines: LineObject[] = [];
+                for (const line of eachTextInSelection(editor)) {
                     lines.push(new LineObject(line));
                 }
 
                 const newText = value.includes(' ') ?
                     alignBySpace(lines) :
                     alignBySeparator(lines, value);
-                replaceSelection(newText);
-                // vscode.window.showInformationMessage(`Alined by "${value}"`);
+                replaceSelection(editor, newText);
             });
         }));
 }
