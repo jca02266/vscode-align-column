@@ -31,6 +31,22 @@
                 "${workspaceFolder}/out/test/**/*.js"
             ],
             "preLaunchTask": "${defaultBuildTask}"
+        },
+        {
+            "name": "Simple Mocha Tests",
+            "type": "node",
+            "request": "launch",
+            "args": [
+                "node_modules/mocha/bin/_mocha",
+                "--ui",
+                "tdd",
+                "out/testMocha/index.js"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/out/testMocha/**/*.js"
+            ],
+            "preLaunchTask": "${defaultBuildTask}"
         }
     ]
 }
+
