@@ -155,16 +155,16 @@ function eastAsianWidthAtPosition(editor: vscode.TextEditor, pos: vscode.Positio
     return vsc.eastAsianWidth(editor.document.lineAt(pos.line).text, pos.character);
 }
 
-async function alignMultiCursor(i: number, editor: vscode.TextEditor, selGroup: [number, vscode.Selection[]][], maxWidth: number)  {
-    for (const [, sels] of selGroup) {
-        await editor.edit(edit => {
-            const sel = sels[i];
-            if (sel) {
-                const col = maxWidth - eastAsianWidthAtPosition(editor, sel.active);
-                edit.insert(new vscode.Position(sel.active.line, sel.active.character), " ".repeat(col));
-            }
-        }, {undoStopAfter: false, undoStopBefore: false});
+export async function alignColumns(editor: vscode.TextEditor, value: string) {
+    const lines: LineObject[] = [];
+    for (const line of vsc.eachTextInSelection(editor)) {
+        lines.push(new LineObject(line));
     }
+
+    const newText = value.includes(' ') ?
+        alignBySpace(lines) :
+        alignBySeparator(lines, value);
+    await vsc.replaceSelection(editor, newText);
 }
 
 function getSelectionGroup(editor: vscode.TextEditor): [number, vscode.Selection[]][] {
@@ -177,11 +177,39 @@ function getSelectionGroup(editor: vscode.TextEditor): [number, vscode.Selection
     }).groupBy<number, vscode.Selection>((v) => v.active.line);
 }
 
+async function _alignMultiCursor(i: number, editor: vscode.TextEditor, selGroup: [number, vscode.Selection[]][], maxWidth: number)  {
+    for (const [, sels] of selGroup) {
+        await editor.edit(edit => {
+            const sel = sels[i];
+            if (sel) {
+                const col = maxWidth - eastAsianWidthAtPosition(editor, sel.active);
+                edit.insert(new vscode.Position(sel.active.line, sel.active.character), " ".repeat(col));
+            }
+        }, {undoStopAfter: false, undoStopBefore: false});
+    }
+}
+
+export async function alignMultiCursor(editor: vscode.TextEditor) {
+    const selGroup = getSelectionGroup(editor);
+
+    let maxNum = -1;
+    for (const [, sels] of selGroup) {
+        maxNum = Math.max(maxNum, sels.length);
+    }
+
+    for (let i = 0; i < maxNum; i++) {
+        const selGroup = getSelectionGroup(editor);
+        let maxWidth = -1;
+        for (const [, sels] of selGroup) {
+            maxWidth = Math.max(maxWidth, eastAsianWidthAtPosition(editor, sels[i].active));
+        }
+        await _alignMultiCursor(i, editor, selGroup, maxWidth);
+    }
+}
+
 export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('align-columns.align', async () => {
-            // for debugging
-            // await setUp();
             const editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
             if (!editor) {
                 return;
@@ -191,28 +219,19 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            vscode.window.showInputBox({
+            const value = await vscode.window.showInputBox({
                 prompt: 'Input separator: ',
                 value: ',=',
                 validateInput: input => {
                     return input.length > 0 ? '' : 'input: separator or just a space';
                 }
-            }).then((value) => {
-                if (value === undefined) {
-                    // canceled
-                    return;
-                }
-
-                const lines: LineObject[] = [];
-                for (const line of vsc.eachTextInSelection(editor)) {
-                    lines.push(new LineObject(line));
-                }
-
-                const newText = value.includes(' ') ?
-                    alignBySpace(lines) :
-                    alignBySeparator(lines, value);
-                vsc.replaceSelection(editor, newText);
             });
+
+            if (value === undefined) {
+                // canceled
+                return;
+            }
+            await alignColumns(editor, value);
         }));
     context.subscriptions.push(
         vscode.commands.registerCommand('align-columns.align-multi-cursor', async () => {
@@ -220,22 +239,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (!editor) {
                 return;
             }
-
-            const selGroup = getSelectionGroup(editor);
-
-            let maxNum = -1;
-            for (const [, sels] of selGroup) {
-                maxNum = Math.max(maxNum, sels.length);
-            }
-
-            for (let i = 0; i < maxNum; i++) {
-                const selGroup = getSelectionGroup(editor);
-                let maxWidth = -1;
-                for (const [, sels] of selGroup) {
-                    maxWidth = Math.max(maxWidth, eastAsianWidthAtPosition(editor, sels[i].active));
-                }
-                await alignMultiCursor(i, editor, selGroup, maxWidth);
-            }
+            await alignMultiCursor(editor);
         }));
     context.subscriptions.push(
         vscode.commands.registerCommand('align-columns.remove-spaces-after-cursor', async () => {

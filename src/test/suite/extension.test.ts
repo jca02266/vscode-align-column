@@ -4,46 +4,141 @@ import * as vscode from 'vscode';
 import * as myExtension from '../../extension';
 import * as jsu from '../../js-utils';
 
+function fixture(str: string) {
+    let ret = str;
+
+    // remove first empty line
+    ret = ret.replace(/^\n+/, "");
+    // remove last empty line
+    ret = ret.replace(/ +$/, "");
+    // return between "|" and "|"
+    return ret.replace(/^ *\||\|$/mg, "");
+}
+
+function getEditor(): vscode.TextEditor {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        throw Error("Failed to setup activeTextEditor");
+    }
+    return editor;
+}
+
+function startPos(): vscode.Position {
+    return new vscode.Position(0, 0);
+}
+
+function endPos(editor: vscode.TextEditor): vscode.Position {
+    const body = editor.document.getText();
+    return editor.document.positionAt(body.length);
+}
+
+function wholeSelection(editor: vscode.TextEditor): vscode.Selection {
+    return new vscode.Selection(startPos(), endPos(editor));
+}
+
+function wholeRange(editor: vscode.TextEditor): vscode.Range {
+    const selection = wholeSelection(editor);
+    return new vscode.Range(selection.start, selection.end);
+}
+
+function selectWholeText(editor: vscode.TextEditor) {
+    editor.selection = wholeSelection(editor);
+}
+
+async function getEditorAndSetText(str: string): Promise<vscode.TextEditor> {
+    const editor = getEditor();
+    await editor.edit(edit => {
+        edit.insert(new vscode.Position(0, 0), str);
+        editor.selections = [
+            wholeSelection(editor)
+        ];
+    });
+    return editor;
+}
+
 suite('Extension Test Suite', () => {
     vscode.window.showInformationMessage('Start all tests.');
 
-    suite('test1', () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            throw Error("Failed to setup activeTextEditor");
-        }
-        const wholeText = `|a1,  a2 a3|
-                           |b1, b2  b3|
-                           |c1   , c2  c3|
-                           | d1,  d2  d3  |`.replace(/^ *\||\|$/mg, "");
+    suite('test', () => {
         setup(async () => {
+            // delete whole text
+            const editor = getEditor();
             await editor.edit(edit => {
-                const pos = new vscode.Position(0, 0);
-                for (const [i, line] of wholeText.split("\n").entries()) {
-                    edit.insert(new vscode.Position(i, 0), line + "\n");
-                }
-            });
-            editor.selections = [
-                new vscode.Selection(new vscode.Position(0, 0), new vscode.Position(4, 0))
-            ];
-        });
-        teardown(async () => {
-            await editor.edit(edit => {
-                const body = editor.document.getText();
-                const pos = new vscode.Position(0, 0);
-                const pos2 = editor.document.positionAt(body.length);
-                edit.delete(new vscode.Range(pos, pos2))
+                edit.delete(wholeRange(editor));
             });
         });
 
-        test('simple check line', () => {
-            const pos = new vscode.Position(0, 0);
-            const line = editor.document.lineAt(pos).text;
-            assert.strictEqual("a1,  a2 a3", line);
+        suite('simple test', () => {
+            test('simple check line', async () => {
+                const text = fixture(`|a1, a2, a3|`);
+                const editor = await getEditorAndSetText(text);
+                const line = editor.document.lineAt(startPos()).text;
+                assert.strictEqual(line, "a1, a2, a3");
+            });
+            test('simple check body', async () => {
+                const text = fixture(`
+                    |a1, a2, a3|
+                    |b1, b2, b3|
+                    `);
+                const editor = await getEditorAndSetText(text);
+                const body = editor.document.getText();
+                assert.strictEqual(body, text);
+            });
         });
-        test('simple check body', () => {
-            const body = editor.document.getText();
-            assert.strictEqual(wholeText + "\n", body);
+        suite('align-columns.align', () => {
+            test('align-columns.align by space', async () => {
+                const text = fixture(`
+                    |a1, a2, a3|
+                    |b1,   b2, b3|
+                    | b1, b2,  b3  |
+                    `);
+                const expect = fixture(`
+                    | a1,   a2,  a3|
+                    | b1,   b2,  b3|
+                    | b1,   b2,  b3  |
+                    `);
+
+                const editor = await getEditorAndSetText(text);
+                selectWholeText(editor);
+                await myExtension.alignColumns(editor, " ");
+                const body = editor.document.getText();
+                assert.strictEqual(body, expect);
+            });
+            test('align-columns.align by comma', async () => {
+                const text = fixture(`
+                    |a1, a2, a3|
+                    |b1,,   b2, b3|
+                    | b1, b2,  b3  |
+                    `);
+                const expect = fixture(`
+                    |a1 ,a2,a3|
+                    |b1 ,  ,b2, b3|
+                    | b1,b2,b3  |
+                `);
+
+                const editor = await getEditorAndSetText(text);
+                selectWholeText(editor);
+                await myExtension.alignColumns(editor, ",");
+                const body = editor.document.getText();
+                assert.strictEqual(body, expect);
+            });
+            test('align-columns.align by comma and equal', async () => {
+                const text = fixture(`
+                    |int a = 1, b = 2, c = 3;|
+                    |char d = 'c', s[] = "abc";|
+                    `);
+                const expect = fixture(`
+                    |int a  =1  ,b   =2, c = 3;|
+                    |char d ='c',s[] ="abc";|
+                `);
+
+                const editor = await getEditorAndSetText(text);
+                selectWholeText(editor);
+                await myExtension.alignColumns(editor, ",=");
+                const body = editor.document.getText();
+                assert.strictEqual(body, expect);
+            });
         });
+
     });
 });
