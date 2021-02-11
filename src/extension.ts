@@ -2,29 +2,6 @@ import * as vscode from 'vscode';
 import './js-utils';
 import * as vsc from './vsc-utils';
 
-// For Tests
-
-async function setUp() {
-    const editor = vscode.window.activeTextEditor;
-    if (editor) {
-        await editor.edit(edit => {
-            edit.insert(new vscode.Position(0, 0), "a1,  a2 a3\n");
-            edit.insert(new vscode.Position(1, 0), "b1, b2  b3\n");
-            edit.insert(new vscode.Position(2, 0), "c1     ,  c2  c3\n");
-            edit.insert(new vscode.Position(3, 0), " d1,  d2  d3  \n");
-
-            // edit.insert(new vscode.Position(0, 0), "a1,  a2 a3\n");
-            // edit.insert(new vscode.Position(1, 0), "b1, b2  b3\n");
-            // edit.insert(new vscode.Position(2, 0), "c1     ,  c2  c3\n");
-            // edit.insert(new vscode.Position(3, 0), "d1,  d2  d3  \n");
-
-        });
-        editor.selections = [
-            new vscode.Selection(new vscode.Position(0, 0), new vscode.Position(4, 0))
-        ];
-    }
-}
-
 class LineObject {
     str: string;
     lastindex: number;
