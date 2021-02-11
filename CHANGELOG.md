@@ -1,9 +1,9 @@
 # Change Log
 
-All notable changes to the "align-columns" extension will be documented in this file.
+## v0.0.2 - 2021-02-11
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+- Update documents
 
-## [Unreleased]
+## v0.0.1 - 2021-02-11
 
 - Initial release

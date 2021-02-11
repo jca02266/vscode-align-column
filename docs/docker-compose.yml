@@ -1,0 +1,10 @@
+version: '2'
+
+services:
+  app:
+    image: jrottenberg/ffmpeg:snapshot-alpine
+    volumes:
+      - ./mov:/app/mov
+      - ./gif:/app/gif
+    command: /bin/sh
+    tty: true
