@@ -14,7 +14,7 @@ export function* zip<T>(a: T[], b: T[]) {
     })();
 
     for (let i = 0; i < length; i++) {
-        yield [a[i], b[i], i];
+        yield [a[i], b[i]];
     }
 }
 
