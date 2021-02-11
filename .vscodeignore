@@ -1,6 +1,7 @@
 .vscode/**
 .vscode-test/**
 out/test/**
+out/testMocha/**
 src/**
 .gitignore
 vsc-extension-quickstart.md
@@ -8,3 +9,5 @@ vsc-extension-quickstart.md
 **/.eslintrc.json
 **/*.map
 **/*.ts
+docs/**
+*.bak
