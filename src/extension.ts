@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import './js-utils';
+import * as vsc from './vsc-utils';
 
 // For Tests
 
@@ -21,180 +23,6 @@ async function setUp() {
             new vscode.Selection(new vscode.Position(0, 0), new vscode.Position(4, 0))
         ];
     }
-}
-
-// Utilities
-
-function* range(n: number) {
-    for (let i = 0; i < n; i++) {
-        yield i;
-    }
-}
-
-function* zip<T>(a: T[], b: T[]) {
-    const length = (() => {
-        if (a.length >= b.length) {
-            return a.length;
-        } else {
-            return b.length;
-        }
-    })();
-
-    for (let i = 0; i < length; i++) {
-        yield [a[i], b[i], i];
-    }
-}
-
-function* eachTextInSelection(editor: vscode.TextEditor) {
-    const startLine = editor.selection.start.line;
-    const endLine = editor.selection.end.line;
-    for (let line = startLine; line < endLine; line++) {
-        const text = editor.document.lineAt(line).text;
-        yield text;
-    }
-}
-
-async function replaceSelection(editor: vscode.TextEditor, newText: string) {
-    await editor.edit(edit => {
-        edit.replace(editor.selection, newText);
-    });
-}
-
-declare global {
-    interface Array<T> {
-        minIndex(fn: (v: T) => number): number | undefined
-        maxIndex(fn: (v: T) => number): number | undefined
-        min(fn: (v: T) => number): T
-        max(fn: (v: T) => number): T
-        groupBy<K, T>(
-            getKey: (cur: T, idx: number, src: readonly T[]) => K): [K, T[]][]
-    }
-}
-
-Array.prototype.groupBy = function<K, T>(
-    getKey: (cur: T, idx: number, src: readonly T[]) => K
-): [K, T[]][] {
-    return Array.from(
-        this.reduce((map, cur, idx, src) => {
-            const key = getKey(cur, idx, src);
-            const list = map.get(key);
-            if (list) {
-                list.push(cur);
-            } else {
-                map.set(key, [cur]);
-            }
-            return map;
-        }, new Map<K, T[]>())
-    );
-};
-
-Array.prototype.minIndex = function (fn: <T>(v: T) => number): number | undefined {
-    if (this.length < 1) {
-        return;
-    }
-
-    var index = 0;
-    var min = fn(this[index]);
-
-    for (var i = 1; i < this.length; i++) {
-        var tmp = fn(this[i]);
-        if (tmp < min) {
-            min = tmp;
-            index = i;
-        }
-    }
-
-    return index;
-};
-
-Array.prototype.maxIndex = function (fn: <T>(v: T) => number): number | undefined {
-    if (this.length < 1) {
-        return;
-    }
-
-    var index = 0;
-    var max = fn(this[index]);
-
-    for (var i = 1; i < this.length; i++) {
-        var tmp = fn(this[i]);
-        if (tmp > max) {
-            max = tmp;
-            index = i;
-        }
-    }
-
-    return index;
-};
-
-Array.prototype.min = function (fn: (v: any) => number): any | undefined {
-    const i = this.minIndex(fn);
-    if (i !== undefined) {
-        return this[i];
-    }
-};
-
-Array.prototype.max = function (fn: (v: any) => number): any | undefined {
-    const i = this.maxIndex(fn);
-    if (i !== undefined) {
-        return this[i];
-    }
-};
-
-declare global {
-    interface String {
-        indexChar(s: string, index?: number): number
-        indexNonSpace(index?: number): number
-        splice(start: number, delCount: number, newSubStr: string): string
-    }
-}
-
-String.prototype.splice = function (start, delCount, newSubStr) {
-    return this.slice(0, start) + newSubStr + this.slice(start + Math.abs(delCount));
-};
-
-String.prototype.indexNonSpace = function (index: number = 0): number {
-    for (let i = index; i < this.length; i++) {
-        if (this.charAt(i) !== ' ') {
-            return i;
-        }
-    }
-    return -1;
-};
-
-// 文字列sの各文字のうち、最も左で見つかったインデックスを返す
-String.prototype.indexChar = function (s: string, index: number = 0): number {
-    let lastindex = -1;
-    for (let i = 0; i < s.length; i++) {
-        const v = this.indexOf(s.charAt(i), index);
-        if (v >= 0 && (lastindex < 0 || v < lastindex)) {
-            lastindex = v;
-        }
-    }
-    return lastindex;
-};
-
-function bytesize(s: string, index: number): 1|2 {
-    var codepoint = s.charCodeAt(index || 0);
-
-    // ASCII
-    if (codepoint < 0x100) {
-        return 1;
-    }
-
-    // Halfwidth CJK punctuation, Halfwidth Katakana variants
-    if (0xFF61 <= codepoint && codepoint <= 0xFF9F) {
-        return 1;
-    }
-
-    return 2;
-}
-
-function eastAsianWidth(s: string, len: number): number {
-    let ret = 0;
-    for (let i = 0; i < len; i++) {
-        ret += bytesize(s, i);
-    }
-    return ret;
 }
 
 class LineObject {
@@ -227,7 +55,7 @@ function getColumnInfo1(lines: LineObject[], cstr: string): XS[] | undefined {
 
         xs.push({
             idx: i,
-            column: eastAsianWidth(lines[i].str, lines[i].lastindex),
+            column: vsc.eastAsianWidth(lines[i].str, lines[i].lastindex),
             char: lines[i].str.charAt(lines[i].lastindex)
         });
     }
@@ -302,7 +130,7 @@ function getColumnInfo2(lines: LineObject[]): XS[] | undefined {
 
         xs.push({
             idx: i,
-            column: eastAsianWidth(lines[i].str, lines[i].lastindex),
+            column: vsc.eastAsianWidth(lines[i].str, lines[i].lastindex),
             char: lines[i].str.charAt(lines[i].lastindex)
         });
     }
@@ -347,7 +175,7 @@ function alignBySpace(lines: LineObject[]): string {
 }
 
 function eastAsianWidthAtPosition(editor: vscode.TextEditor, pos: vscode.Position): number {
-    return eastAsianWidth(editor.document.lineAt(pos.line).text, pos.character);
+    return vsc.eastAsianWidth(editor.document.lineAt(pos.line).text, pos.character);
 }
 
 async function alignMultiCursor(i: number, editor: vscode.TextEditor, selGroup: [number, vscode.Selection[]][], maxWidth: number)  {
@@ -362,9 +190,6 @@ async function alignMultiCursor(i: number, editor: vscode.TextEditor, selGroup: 
     }
 }
 
-function charCodeAt(document: vscode.TextDocument, position: vscode.Position): number {
-    return document.lineAt(position.line).text.charCodeAt(position.character);
-}
 function getSelectionGroup(editor: vscode.TextEditor): [number, vscode.Selection[]][] {
     return editor.selections.sort((a, b) => {
         const diff = a.active.line - b.active.line;
@@ -402,14 +227,14 @@ export function activate(context: vscode.ExtensionContext) {
                 }
 
                 const lines: LineObject[] = [];
-                for (const line of eachTextInSelection(editor)) {
+                for (const line of vsc.eachTextInSelection(editor)) {
                     lines.push(new LineObject(line));
                 }
 
                 const newText = value.includes(' ') ?
                     alignBySpace(lines) :
                     alignBySeparator(lines, value);
-                replaceSelection(editor, newText);
+                vsc.replaceSelection(editor, newText);
             });
         }));
     context.subscriptions.push(
@@ -445,7 +270,7 @@ export function activate(context: vscode.ExtensionContext) {
             const removeSpacesAfterCursor = async (selection: vscode.Selection) => {
                 const pos = selection.active;
                 let pos2 = pos.translate();
-                while (charCodeAt(editor.document, pos2) <= 32) {
+                while (vsc.charCodeAt(editor.document, pos2) <= 32) {
                     pos2 = pos2.translate(0, 1);
                 }
                 await editor.edit(edit => {
