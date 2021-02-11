@@ -51,11 +51,11 @@ Array.prototype.minIndex = function (fn: <T>(v: T) => number): number | undefine
         return;
     }
 
-    var index = 0;
-    var min = fn(this[index]);
+    let index = 0;
+    let min = fn(this[index]);
 
-    for (var i = 1; i < this.length; i++) {
-        var tmp = fn(this[i]);
+    for (let i = 1; i < this.length; i++) {
+        let tmp = fn(this[i]);
         if (tmp < min) {
             min = tmp;
             index = i;
@@ -70,11 +70,11 @@ Array.prototype.maxIndex = function (fn: <T>(v: T) => number): number | undefine
         return;
     }
 
-    var index = 0;
-    var max = fn(this[index]);
+    let index = 0;
+    let max = fn(this[index]);
 
-    for (var i = 1; i < this.length; i++) {
-        var tmp = fn(this[i]);
+    for (let i = 1; i < this.length; i++) {
+        let tmp = fn(this[i]);
         if (tmp > max) {
             max = tmp;
             index = i;
@@ -119,14 +119,15 @@ String.prototype.indexNonSpace = function (index: number = 0): number {
     return -1;
 };
 
-// 文字列sの各文字のうち、最も左で見つかったインデックスを返す
-String.prototype.indexChar = function (s: string, index: number = 0): number {
-    let lastindex = -1;
-    for (let i = 0; i < s.length; i++) {
-        const v = this.indexOf(s.charAt(i), index);
-        if (v >= 0 && (lastindex < 0 || v < lastindex)) {
-            lastindex = v;
+// return most left index searchChars from this.
+// return -1 if not found
+String.prototype.indexChar = function (searchChars: string, from: number = 0): number {
+    let lastindex = Infinity;
+    for (const c of [...searchChars]) {
+        const i = this.indexOf(c, from);
+        if (i >= 0) {
+            lastindex = Math.min(i, lastindex);
         }
     }
-    return lastindex;
+    return isFinite(lastindex) ? lastindex : -1;
 };
