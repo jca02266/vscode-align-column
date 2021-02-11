@@ -3,6 +3,8 @@
     "displayName": "align-columns",
     "description": "Align multi columns",
     "version": "0.0.1",
+    "publisher": "jca02266",
+    "repository": "https://github.com/jca02266/vscode-align-column",
     "engines": {
         "vscode": "^1.46.0"
     },
