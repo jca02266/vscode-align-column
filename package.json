@@ -2,7 +2,7 @@
     "name": "align-columns",
     "displayName": "align-columns",
     "description": "Align multi columns",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "publisher": "jca02266",
     "engines": {
         "vscode": "^1.46.0"
@@ -15,11 +15,7 @@
     "categories": [
         "Other"
     ],
-    "activationEvents": [
-        "onCommand:align-columns.align",
-        "onCommand:align-columns.align-multi-cursor",
-        "onCommand:align-columns.remove-spaces-after-cursor"
-    ],
+    "activationEvents": [],
     "main": "./out/extension.js",
     "contributes": {
         "commands": [
@@ -35,6 +31,35 @@
                 "command": "align-columns.remove-spaces-after-cursor",
                 "title": "Align-columns: Remove spaces after cursor"
             }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "submenu": "align-columns.menu-list",
+                    "when": "!editorReadonly && editorFocus",
+                    "group": "1_modification"
+                }
+            ],
+            "align-columns.menu-list": [
+                {
+                    "command": "align-columns.align",
+                    "when": "editorHasSelection"
+                },
+                {
+                    "command": "align-columns.align-multi-cursor",
+                    "when": "multiCursorModifier"
+                },
+                {
+                    "command": "align-columns.remove-spaces-after-cursor",
+                    "when": "multiCursorModifier"
+                }
+            ]
+        },
+        "submenus": [
+            {
+				"id": "align-columns.menu-list",
+				"label": "Align-columns"
+			}
         ]
     },
     "scripts": {
@@ -47,7 +72,7 @@
         "mocha": "mocha --ui tdd out/testMocha/index.js"
     },
     "devDependencies": {
-        "@types/vscode": "^1.46.0",
+        "@types/vscode": "1.46.0",
         "@types/glob": "^7.1.1",
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.11.0",

@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 export function* eachTextInSelection(editor: vscode.TextEditor) {
     const startLine = editor.selection.start.line;
     const endLine = editor.selection.end.line;
-    for (let line = startLine; line < endLine; line++) {
+    for (let line = startLine; line <= endLine; line++) {
         const text = editor.document.lineAt(line).text;
         yield text;
     }
