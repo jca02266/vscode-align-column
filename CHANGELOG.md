@@ -1,9 +1,10 @@
 # Change Log
 
-## v0.0.5-2023-03-15
+## v0.0.5 - 2023-03-15
 
-- 修复多行选中格式化数量错误
-- 支持右键菜单
+- repair multi-line select number format error
+- support the right-click menu
+- add plugin icon
 
 ## v0.0.4 - 2022-02-11
 
