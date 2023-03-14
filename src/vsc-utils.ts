@@ -1,11 +1,19 @@
 import * as vscode from 'vscode';
 
 export function* eachTextInSelection(editor: vscode.TextEditor) {
-    const startLine = editor.selection.start.line;
-    const endLine = editor.selection.end.line;
-    for (let line = startLine; line <= endLine; line++) {
-        const text = editor.document.lineAt(line).text;
-        yield text;
+    // get the selected cursor selected row
+    const selections = editor.selections
+
+    for (const selection of selections) {
+        // get the selected text through location information
+        const text = editor.document.getText(selection);
+        // divide every line currently selected
+        const lines = text.split('\n')
+
+        for (const line of lines) {
+            yield line;
+        }
+
     }
 }
 

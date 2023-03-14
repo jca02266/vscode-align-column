@@ -89,7 +89,7 @@ function alignBySeparator(lines: LineObject[], cstr: string): string {
             }
         });
     }
-    return lines.map(function (v) { return v.str + "\n"; }).join("");
+    return formatLine(lines);
 }
 
 // 1. 区切り文字に関する情報(インデックス, サイズ(column), 文字(char))を抽出
@@ -148,7 +148,12 @@ function alignBySpace(lines: LineObject[]): string {
             }
         });
     }
-    return lines.map(function (v) { return v.str + "\n"; }).join("");
+    return formatLine(lines);
+}
+
+function formatLine(lines: LineObject[]) {
+    const length = lines.length
+    return lines.map((v, idx) => v.str + (idx === length - 1 ? '' : '\n')).join("");
 }
 
 function eastAsianWidthAtPosition(editor: vscode.TextEditor, pos: vscode.Position): number {
