@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.0.5 - 2023-03-15
+
+- repair multi-line select number format error
+- support the right-click menu
+- add plugin icon
+
 ## v0.0.4 - 2022-02-11
 
 - Support capabilities.untrustedWorkspaces
