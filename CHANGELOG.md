@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.0.6 - 2023-03-26
+
+- Fix packaging
+
 ## v0.0.5 - 2023-03-15
 
 - repair multi-line select number format error
