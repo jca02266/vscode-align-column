@@ -9,7 +9,7 @@
     },
     "capabilities": {
         "untrustedWorkspaces": {
-          "supported": true
+            "supported": true
         }
     },
     "categories": [
@@ -58,9 +58,9 @@
         },
         "submenus": [
             {
-				"id": "align-columns.menu-list",
-				"label": "Align-columns"
-			}
+                "id": "align-columns.menu-list",
+                "label": "Align-columns"
+            }
         ]
     },
     "scripts": {
@@ -73,25 +73,25 @@
         "mocha": "mocha --ui tdd out/testMocha/index.js"
     },
     "devDependencies": {
-        "@types/vscode": "1.46.0",
         "@types/glob": "^7.1.1",
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.11.0",
-        "eslint": "^6.8.0",
-        "@typescript-eslint/parser": "^2.30.0",
+        "@types/vscode": "1.46.0",
         "@typescript-eslint/eslint-plugin": "^2.30.0",
+        "@typescript-eslint/parser": "^2.30.0",
+        "eslint": "^6.8.0",
         "glob": "^7.1.6",
-        "mocha": "^7.1.2",
+        "mocha": "^10.2.0",
         "typescript": "^3.8.3",
         "vscode-test": "^1.3.0"
     },
     "license": "MIT",
     "bugs": {
-      "url": "https://github.com/jca02266/vscode-align-column/issues",
-      "email": "jca02266@gmail.com"
+        "url": "https://github.com/jca02266/vscode-align-column/issues",
+        "email": "jca02266@gmail.com"
     },
     "repository": {
-      "type": "git",
-      "url": "https://github.com/jca02266/vscode-align-column"
+        "type": "git",
+        "url": "https://github.com/jca02266/vscode-align-column"
     }
 }
