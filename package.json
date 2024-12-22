@@ -2,7 +2,7 @@
     "name": "align-columns",
     "displayName": "align-columns",
     "description": "Align multi columns",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "publisher": "jca02266",
     "engines": {
         "vscode": "^1.46.0"

@@ -41,7 +41,7 @@ export function getColumnInfo1(lines: LineObject[], cstr: string): XS[] | undefi
     return xs;
 }
 
-export function alignBySeparator(lines: LineObject[], cstr: string): string {
+export function alignBySeparator(lines: LineObject[], cstr: string, addAfterSpace: boolean): string {
     let xs;
     while ((xs = getColumnInfo1(lines, cstr)) !== undefined) {
         // Retrieve the Most-left delimiter
@@ -79,6 +79,12 @@ export function alignBySeparator(lines: LineObject[], cstr: string): string {
                     delCount++;
                 }
                 s = s.splice(index, delCount, "");
+
+                if (addAfterSpace) {
+                    // just add a space after delimitor
+                    s = s.splice(index, 0, ' ');
+                    index += 1;
+                }
 
                 lines[v.idx] = new LineObject(s, index);
             }

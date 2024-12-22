@@ -13,9 +13,15 @@ export async function alignColumns(editor: vscode.TextEditor, value: string) {
         lines.push(new align.LineObject(line));
     }
 
-    const newText = value.includes(' ') && value.trim() === '' ?
-        align.alignBySpace(lines) :
-        align.alignBySeparator(lines, value);
+    let newText;
+
+    if (value.includes(' ') && value.trim() === '') {
+        newText = align.alignBySpace(lines);
+    } else {
+        const afterSpace = / +$/.test(value);
+        newText = align.alignBySeparator(lines, value, afterSpace);
+    }
+
     await vsc.replaceSelection(editor, newText);
 }
 
