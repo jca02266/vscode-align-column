@@ -1,7 +1,93 @@
 import * as assert from 'assert';
 import * as jsu from '../js-utils';
+import * as align from '../align';
 
 suite('Extension Test Suite', () => {
+    suite('extension', () => {
+        test('getColumnInfo1', () => {
+            const lines: align.LineObject[] = [
+                new align.LineObject('fo, bar=a,b', 0),
+                new align.LineObject('baz,quux=c,d', 0)];
+            const newline = align.alignBySeparator(lines, ",=");
+            assert.strictEqual(newline, "fo ,bar =a,b\nbaz,quux=c,d");
+        });
+        test('getColumnInfo1', () => {
+            const lines: align.LineObject[] = [
+                new align.LineObject('foo', 0),
+                new align.LineObject('bar', 0)];
+            const xs: align.XS[] | undefined = align.getColumnInfo1(lines, ',');
+            assert.strictEqual(xs, undefined);
+        });
+        test('getColumnInfo1', () => {
+            const lines: align.LineObject[] = [
+                new align.LineObject('fo, bar=a,b', 0),
+                new align.LineObject('baz,quux=c,d', 0)];
+
+            const xs = align.getColumnInfo1(lines, ',=');
+
+            assert(xs !== undefined, 'result is undefined');
+            assert.strictEqual(xs.length, 2);
+            assert.deepStrictEqual(xs[0], {idx: 0, column: 2, char: ','}); // fo|,
+            assert.deepStrictEqual(xs[1], {idx: 1, column: 3, char: ','}); // baz|,
+
+            const mlchar = xs.min((v) => v.column).char;
+            assert.strictEqual(mlchar, ',');
+
+            const mrcolumn = xs.max((v) => (mlchar === v.char) ? v.column : -1).column;
+            assert.strictEqual(mrcolumn, 3);
+
+            {
+                const i = 0;
+                let index = lines[i].lastindex;
+                assert.strictEqual(index, 2);
+                let v = xs[i];
+                let spaceCount = mrcolumn - v.column;
+                assert.strictEqual(spaceCount, 1);
+
+                let alignedLine = lines[i].str;
+
+                // insert spaces
+                alignedLine = alignedLine.splice(index, 0, ' '.repeat(spaceCount));
+                assert.strictEqual(alignedLine, 'fo , bar=a,b');
+
+                index += spaceCount + 1;
+                assert.strictEqual(index, 4); // baz,|
+
+                // delete spaces
+                const delCount = 1;
+                alignedLine = alignedLine.splice(index, delCount, "");
+                assert.strictEqual(alignedLine, 'fo ,bar=a,b');
+
+                lines[i] = new align.LineObject(alignedLine, index);
+            }
+
+
+            {
+                const i = 1;
+                let index = lines[i].lastindex;
+                assert.strictEqual(index, 3);
+                let v = xs[i];
+                let spaceCount = mrcolumn - v.column;
+                assert.strictEqual(spaceCount, 0);
+
+                let alignedLine = lines[i].str;
+
+                // insert spaces
+                alignedLine = alignedLine.splice(index, 0, ' '.repeat(spaceCount));
+                assert.strictEqual(alignedLine, 'baz,quux=c,d');
+
+                index += spaceCount + 1;
+                assert.strictEqual(index, 4); // baz,|
+
+                // delete spaces
+                const delCount = 0;
+                alignedLine = alignedLine.splice(index, delCount, "");
+                assert.strictEqual(alignedLine, 'baz,quux=c,d');
+
+                lines[i] = new align.LineObject(alignedLine, index);
+            }
+        });
+    });
     suite('js-utils', () => {
         suite('array', () => {
             test('range', () => {
