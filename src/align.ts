@@ -80,8 +80,7 @@ export function alignBySeparator(lines: LineObject[], cstr: string): string {
                 }
                 s = s.splice(index, delCount, "");
 
-                line.lastindex += spaceCount + 1;
-                lines[v.idx] = new LineObject(s, line.lastindex);
+                lines[v.idx] = new LineObject(s, index);
             }
         });
     }
@@ -148,8 +147,7 @@ export function alignBySpace(lines: LineObject[]): string {
 }
 
 function formatLine(lines: LineObject[]) {
-    const length = lines.length;
-    return lines.map((v, idx) => v.str + (idx === length - 1 ? '' : '\n')).join("");
+    return lines.map((v) => v.str).join("\n");
 }
 
 
