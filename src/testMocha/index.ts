@@ -8,7 +8,7 @@ suite('Extension Test Suite', () => {
             const lines: align.LineObject[] = [
                 new align.LineObject('fo, bar=a,b', 0),
                 new align.LineObject('baz,quux=c,d', 0)];
-            const newline = align.alignBySeparator(lines, ",=");
+            const newline = align.alignBySeparator(lines, ",=", false);
             assert.strictEqual(newline, "fo ,bar =a,b\nbaz,quux=c,d");
         });
         test('getColumnInfo1', () => {
