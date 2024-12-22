@@ -1,7 +1,33 @@
 import * as assert from 'assert';
 import * as jsu from '../js-utils';
+import * as ailgn from '../align';
 
 suite('Extension Test Suite', () => {
+    suite('extension', () => {
+        test('getColumnInfo1', () => {
+            const lo: ailgn.LineObject[] = [
+                new ailgn.LineObject('foo', 0),
+                new ailgn.LineObject('bar', 0)];
+            const xs: ailgn.XS[] | undefined = ailgn.getColumnInfo1(lo, ',');
+            assert.strictEqual(xs, undefined);
+        });
+        test('getColumnInfo1', () => {
+            const lo: ailgn.LineObject[] = [
+                new ailgn.LineObject('fo,bar', 0),
+                new ailgn.LineObject('baz.qux.', 0)];
+            const xs = ailgn.getColumnInfo1(lo, ',.');
+            assert(xs !== undefined, 'result is undefined');
+            assert.strictEqual(xs.length, 2);
+            assert.deepStrictEqual(xs[0], {idx: 0, column: 2, char: ','});
+            assert.deepStrictEqual(xs[1], {idx: 1, column: 3, char: '.'});
+
+            const mlchar = xs.min((v) => v.column).char;
+            assert.strictEqual(mlchar, ',');
+
+            const mrcolumn = xs.max((v) => (mlchar === v.char) ? v.column : -1).column;
+            assert.strictEqual(mrcolumn, 2);
+        });
+    });
     suite('js-utils', () => {
         suite('array', () => {
             test('range', () => {
