@@ -13,7 +13,7 @@ export interface XS {
     char: string
 }
 
-// 1. 区切り文字に関する情報(インデックス, サイズ(column), 文字(char))を抽出
+// Extract information about delimiters (XS: index, column, character)
 export function getColumnInfo1(lines: LineObject[], cstr: string): XS[] | undefined {
     const xs: XS[] = [];
     for (let i = 0; i < lines.length; i++) {
@@ -34,7 +34,7 @@ export function getColumnInfo1(lines: LineObject[], cstr: string): XS[] | undefi
     }
 
     if (xs.length <= 1) {
-        // 区切り文字を含む行がない。または、1行で桁揃えの必要がない
+        // No lines contain delimiters, or there is no need for alignment in a single line
         return undefined;
     }
 
@@ -44,21 +44,21 @@ export function getColumnInfo1(lines: LineObject[], cstr: string): XS[] | undefi
 export function alignBySeparator(lines: LineObject[], cstr: string): string {
     let xs;
     while ((xs = getColumnInfo1(lines, cstr)) !== undefined) {
-        // 2. 最左にある区切り文字を取得
-        var mlchar = xs.min(function (v: XS): number { return v.column; }).char; // 最左文字(most-left-char)
+        // Retrieve the Most-left delimiter
+        var mlchar = xs.min(function (v: XS): number { return v.column; }).char; // Most-left delimiter
 
-        // 3. 2で取得した区切り文字と同じ文字で最右にあるものを取得
+        // Retrieve the Most-right column that matches the character Most-left delimiter
         var mrcolumn = xs.max(function (v: XS): number {
             if (mlchar === v.char) {
                 return v.column;
             }
             return -1;
-        }).column;  // 最右カラム(most-right-column)
+        }).column;  // Most-right column
 
-        // 4. 区切り文字の位置を3の最右にそろえる
+        // Align the position of the delimiter to the Most-right one
         var lenback = 0;
         if (mlchar.indexChar(",)]}") !== -1) {
-          // , ) ] } の後を揃える
+          // Align after ,, ), ], or }
           lenback = 1;
         }
 
@@ -69,10 +69,10 @@ export function alignBySeparator(lines: LineObject[], cstr: string): string {
                 let index = line.lastindex;
                 const spaceCount = mrcolumn - v.column;
 
-                // 区切り文字の桁を揃える
+                // Align the columns of delimiters
                 let s = line.str.splice(index, 0, " ".repeat(spaceCount));
 
-                // (区切り文字の次の文字)が空白だったら詰める
+                // If the character following the delimiter is a space, remove it
                 index += spaceCount + 1;
                 let delCount = 0;
                 while (s.charAt(index + delCount) === ' ') {
@@ -88,7 +88,7 @@ export function alignBySeparator(lines: LineObject[], cstr: string): string {
     return formatLine(lines);
 }
 
-// 1. 区切り文字に関する情報(インデックス, サイズ(column), 文字(char))を抽出
+// Extract information about delimiters (XS: index, column, character)
 function getColumnInfo2(lines: LineObject[]): XS[] | undefined {
     const xs: XS[] = [];
     for (let i = 0; i < lines.length; i++) {
@@ -109,7 +109,7 @@ function getColumnInfo2(lines: LineObject[]): XS[] | undefined {
     }
 
     if (xs.length <= 1) {
-        // 区切り文字を含む行がない。または、1行で桁揃えの必要がない
+        // No lines contain delimiters, or there is no need for alignment in a single line
         return undefined;
     }
     return xs;
@@ -118,13 +118,13 @@ function getColumnInfo2(lines: LineObject[]): XS[] | undefined {
 export function alignBySpace(lines: LineObject[]): string {
     let xs;
     while ((xs = getColumnInfo2(lines)) !== undefined) {
-        // 3. 2で取得した区切り文字と同じ文字で最右にあるものを取得
+        // Retrieve the Most-right column that matches the space
         var mrcolumn = xs.max(function (v: XS): number {
             if (' ' !== v.char) {
                 return v.column;
             }
             return -1;
-        }).column;  // 最右カラム(most-right-column)
+        }).column;  // Most-right column
 
         xs.forEach(function (v) {
             if (v.char !== ' ' && v.column <= mrcolumn) {
@@ -133,7 +133,7 @@ export function alignBySpace(lines: LineObject[]): string {
                 const index = line.lastindex;
                 const spaceCount = mrcolumn - v.column;
 
-                // 区切り文字の桁を揃える
+                // Align the columns of delimiters
                 let s = line.str.splice(index, 0, " ".repeat(spaceCount));
 
                 line.lastindex += spaceCount + 1;
