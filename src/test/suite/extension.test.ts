@@ -15,6 +15,11 @@ function fixture(str: string) {
     return ret.replace(/^ *\||\|$/mg, "");
 }
 
+async function setupEditor() {
+    const document = await vscode.workspace.openTextDocument({ content: "" });
+    await vscode.window.showTextDocument(document);
+}
+
 function getEditor(): vscode.TextEditor {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -60,8 +65,10 @@ suite('Extension Test Suite', () => {
     vscode.window.showInformationMessage('Start all tests.');
 
     suite('test', () => {
-        setup(async () => {
+        setup(async function() {
+            this.timeout(5000);
             // delete whole text
+            await setupEditor();
             const editor = getEditor();
             await editor.edit(edit => {
                 edit.delete(wholeRange(editor));
