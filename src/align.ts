@@ -1,10 +1,17 @@
 export class LineObject {
     str: string;
     lastindex: number;
-    constructor(line: string, lastindex: number = 0) {
+    column: number;
+    constructor(line: string, lastindex: number = 0, column: number = 0) {
         this.str = line;
         this.lastindex = lastindex;
+        this.column = column;
     }
+}
+
+export interface Selection {
+    line: number
+    character: number
 }
 
 export interface XS {
@@ -41,8 +48,10 @@ export function getColumnInfo1(lines: LineObject[], cstr: string): XS[] | undefi
     return xs;
 }
 
-export function alignBySeparator(lines: LineObject[], cstr: string, addAfterSpace: boolean): string {
+export function alignBySeparator(lines: LineObject[], cstr: string, addAfterSpace: boolean): [Selection[], string] {
     let xs;
+    const selections: Selection[] = [];
+
     while ((xs = getColumnInfo1(lines, cstr)) !== undefined) {
         // Retrieve the Most-left delimiter
         var mlchar = xs.min(function (v: XS): number { return v.column; }).char; // Most-left delimiter
@@ -80,17 +89,19 @@ export function alignBySeparator(lines: LineObject[], cstr: string, addAfterSpac
                 }
                 s = s.splice(index, delCount, "");
 
+                const column = index;
                 if (addAfterSpace) {
                     // just add a space after delimitor
                     s = s.splice(index, 0, ' ');
                     index += 1;
                 }
 
-                lines[v.idx] = new LineObject(s, index);
+                lines[v.idx] = new LineObject(s, index, column);
             }
+            selections.push({line: v.idx, character: lines[v.idx].column})
         });
     }
-    return formatLine(lines);
+    return [selections, formatLine(lines)];
 }
 
 // Extract information about delimiters (XS: index, column, character)

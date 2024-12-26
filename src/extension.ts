@@ -13,16 +13,21 @@ export async function alignColumns(editor: vscode.TextEditor, value: string) {
         lines.push(new align.LineObject(line));
     }
 
-    let newText;
+    let selections, newText;
 
     if (value.includes(' ') && value.trim() === '') {
         newText = align.alignBySpace(lines);
     } else {
         const afterSpace = / +$/.test(value);
-        newText = align.alignBySeparator(lines, value, afterSpace);
+        [selections, newText] = align.alignBySeparator(lines, value, afterSpace);
     }
 
     await vsc.replaceSelection(editor, newText);
+    if (selections) {
+        editor.selections = selections.map(s => {
+            return new vscode.Selection(s.line, s.character, s.line, s.character) }
+        );
+    }
 }
 
 function getSelectionGroup(editor: vscode.TextEditor): [number, vscode.Selection[]][] {
