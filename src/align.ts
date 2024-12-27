@@ -98,7 +98,7 @@ export function alignBySeparator(lines: LineObject[], cstr: string, addAfterSpac
 
                 lines[v.idx] = new LineObject(s, index, column);
             }
-            selections.push({line: v.idx, character: lines[v.idx].column})
+            selections.push({line: v.idx, character: lines[v.idx].column});
         });
     }
     return [selections, formatLine(lines)];
