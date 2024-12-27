@@ -8,7 +8,7 @@ suite('Extension Test Suite', () => {
             const lines: align.LineObject[] = [
                 new align.LineObject('fo, bar=a,b', 0),
                 new align.LineObject('baz,quux=c,d', 0)];
-            const [selections, newline] = align.alignBySeparator(lines, ",=", false);
+            const [selections, newline] = align.alignBySeparator(lines, ",=");
             assert.deepStrictEqual(selections, [
                 {  line: 0, character: 4  }, // fo ,|bar =a,b
                 {  line: 1, character: 4  }, // baz,|quux=c,d

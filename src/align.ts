@@ -48,9 +48,10 @@ export function getColumnInfo1(lines: LineObject[], cstr: string): XS[] | undefi
     return xs;
 }
 
-export function alignBySeparator(lines: LineObject[], cstr: string, addAfterSpace: boolean): [Selection[], string] {
+export function alignBySeparator(lines: LineObject[], cstr: string): [Selection[], string] {
     let xs;
     const selections: Selection[] = [];
+    const addAfterSpace = false;
 
     while ((xs = getColumnInfo1(lines, cstr)) !== undefined) {
         // Retrieve the Most-left delimiter

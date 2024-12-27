@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.0.7 - 2024-12-27
+
+- Set multiple cursors after align
+
 ## v0.0.6 - 2023-03-26
 
 - Fix packaging

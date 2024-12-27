@@ -18,8 +18,7 @@ export async function alignColumns(editor: vscode.TextEditor, value: string) {
     if (value.includes(' ') && value.trim() === '') {
         newText = align.alignBySpace(lines);
     } else {
-        const afterSpace = / +$/.test(value);
-        [selections, newText] = align.alignBySeparator(lines, value, afterSpace);
+        [selections, newText] = align.alignBySeparator(lines, value);
     }
 
     await vsc.replaceSelection(editor, newText);
