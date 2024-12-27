@@ -55,10 +55,10 @@ export function alignBySeparator(lines: LineObject[], cstr: string): [Selection[
 
     while ((xs = getColumnInfo1(lines, cstr)) !== undefined) {
         // Retrieve the Most-left delimiter
-        var mlchar = xs.min(function (v: XS): number { return v.column; }).char; // Most-left delimiter
+        const mlchar = xs.min(function (v: XS): number { return v.column; }).char; // Most-left delimiter
 
         // Retrieve the Most-right column that matches the character Most-left delimiter
-        var mrcolumn = xs.max(function (v: XS): number {
+        const mrcolumn = xs.max(function (v: XS): number {
             if (mlchar === v.char) {
                 return v.column;
             }
@@ -66,7 +66,7 @@ export function alignBySeparator(lines: LineObject[], cstr: string): [Selection[
         }).column;  // Most-right column
 
         // Align the position of the delimiter to the Most-right one
-        var lenback = 0;
+        let lenback = 0;
         if (mlchar.indexChar(",)]}") !== -1) {
           // Align after ,, ), ], or }
           lenback = 1;
@@ -136,7 +136,7 @@ export function alignBySpace(lines: LineObject[]): string {
     let xs;
     while ((xs = getColumnInfo2(lines)) !== undefined) {
         // Retrieve the Most-right column that matches the space
-        var mrcolumn = xs.max(function (v: XS): number {
+        const mrcolumn = xs.max(function (v: XS): number {
             if (' ' !== v.char) {
                 return v.column;
             }
@@ -170,7 +170,7 @@ function formatLine(lines: LineObject[]) {
 
 
 function charWidth(s: string, index: number): 1|2 {
-    var codepoint = s.charCodeAt(index || 0);
+    const codepoint = s.charCodeAt(index || 0);
 
     // ASCII
     if (codepoint < 0x100) {
