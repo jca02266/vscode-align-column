@@ -3,7 +3,7 @@ import * as jsu from '../js-utils';
 import * as align from '../align';
 
 suite('Extension Test Suite', () => {
-    suite('extension', () => {
+    suite('align', () => {
         test('alignBySeparator', () => {
             const lines: align.LineObject[] = [
                 new align.LineObject('fo, bar=a,b', 0),
