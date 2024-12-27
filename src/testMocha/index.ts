@@ -3,12 +3,20 @@ import * as jsu from '../js-utils';
 import * as align from '../align';
 
 suite('Extension Test Suite', () => {
-    suite('extension', () => {
-        test('getColumnInfo1', () => {
+    suite('align', () => {
+        test('alignBySeparator', () => {
             const lines: align.LineObject[] = [
                 new align.LineObject('fo, bar=a,b', 0),
                 new align.LineObject('baz,quux=c,d', 0)];
-            const newline = align.alignBySeparator(lines, ",=");
+            const [selections, newline] = align.alignBySeparator(lines, ",=");
+            assert.deepStrictEqual(selections, [
+                {  line: 0, character: 4  }, // fo ,|bar =a,b
+                {  line: 1, character: 4  }, // baz,|quux=c,d
+                {  line: 0, character: 9  }, // baz,quux=|c,d
+                {  line: 1, character: 9  }, // baz,quux=|c,d
+                {  line: 0, character: 11 }, // baz,quux=c,|d
+                {  line: 1, character: 11 }  // baz,quux=c,|d
+            ]);
             assert.strictEqual(newline, "fo ,bar =a,b\nbaz,quux=c,d");
         });
         test('getColumnInfo1', () => {
@@ -18,7 +26,7 @@ suite('Extension Test Suite', () => {
             const xs: align.XS[] | undefined = align.getColumnInfo1(lines, ',');
             assert.strictEqual(xs, undefined);
         });
-        test('getColumnInfo1', () => {
+        test('evaluate each step of alignBySeparator()', () => {
             const lines: align.LineObject[] = [
                 new align.LineObject('fo, bar=a,b', 0),
                 new align.LineObject('baz,quux=c,d', 0)];

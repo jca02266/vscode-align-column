@@ -1,10 +1,17 @@
 export class LineObject {
     str: string;
     lastindex: number;
-    constructor(line: string, lastindex: number = 0) {
+    column: number;
+    constructor(line: string, lastindex: number = 0, column: number = 0) {
         this.str = line;
         this.lastindex = lastindex;
+        this.column = column;
     }
+}
+
+export interface Selection {
+    line: number
+    character: number
 }
 
 export interface XS {
@@ -41,14 +48,17 @@ export function getColumnInfo1(lines: LineObject[], cstr: string): XS[] | undefi
     return xs;
 }
 
-export function alignBySeparator(lines: LineObject[], cstr: string): string {
+export function alignBySeparator(lines: LineObject[], cstr: string): [Selection[], string] {
     let xs;
+    const selections: Selection[] = [];
+    const addAfterSpace = false;
+
     while ((xs = getColumnInfo1(lines, cstr)) !== undefined) {
         // Retrieve the Most-left delimiter
-        var mlchar = xs.min(function (v: XS): number { return v.column; }).char; // Most-left delimiter
+        const mlchar = xs.min(function (v: XS): number { return v.column; }).char; // Most-left delimiter
 
         // Retrieve the Most-right column that matches the character Most-left delimiter
-        var mrcolumn = xs.max(function (v: XS): number {
+        const mrcolumn = xs.max(function (v: XS): number {
             if (mlchar === v.char) {
                 return v.column;
             }
@@ -56,7 +66,7 @@ export function alignBySeparator(lines: LineObject[], cstr: string): string {
         }).column;  // Most-right column
 
         // Align the position of the delimiter to the Most-right one
-        var lenback = 0;
+        let lenback = 0;
         if (mlchar.indexChar(",)]}") !== -1) {
           // Align after ,, ), ], or }
           lenback = 1;
@@ -80,11 +90,19 @@ export function alignBySeparator(lines: LineObject[], cstr: string): string {
                 }
                 s = s.splice(index, delCount, "");
 
-                lines[v.idx] = new LineObject(s, index);
+                const column = index;
+                if (addAfterSpace) {
+                    // just add a space after delimitor
+                    s = s.splice(index, 0, ' ');
+                    index += 1;
+                }
+
+                lines[v.idx] = new LineObject(s, index, column);
             }
+            selections.push({line: v.idx, character: lines[v.idx].column});
         });
     }
-    return formatLine(lines);
+    return [selections, formatLine(lines)];
 }
 
 // Extract information about delimiters (XS: index, column, character)
@@ -118,7 +136,7 @@ export function alignBySpace(lines: LineObject[]): string {
     let xs;
     while ((xs = getColumnInfo2(lines)) !== undefined) {
         // Retrieve the Most-right column that matches the space
-        var mrcolumn = xs.max(function (v: XS): number {
+        const mrcolumn = xs.max(function (v: XS): number {
             if (' ' !== v.char) {
                 return v.column;
             }
@@ -152,7 +170,7 @@ function formatLine(lines: LineObject[]) {
 
 
 function charWidth(s: string, index: number): 1|2 {
-    var codepoint = s.charCodeAt(index || 0);
+    const codepoint = s.charCodeAt(index || 0);
 
     // ASCII
     if (codepoint < 0x100) {

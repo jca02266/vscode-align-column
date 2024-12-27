@@ -4,7 +4,8 @@
 
   ```
   npm install
-  npm run compile
+  npm run compile && npm run mocha
+  npm test
   npx vsce package
   code --install-extension=align-columns-X.X.X.vsix
   ```
